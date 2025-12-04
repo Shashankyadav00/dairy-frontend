@@ -31,14 +31,18 @@ function AddCustomer() {
   const navigate = useNavigate();
 
   // Load customers for logged-in user
-  const loadCustomers = async () => {
-    try {
-      const res = await api.get(`/api/customers/${shift}?userId=${userId}`); // ✅ Added userId
-      setCustomers(res.data);
-    } catch (err) {
-      console.error("Error loading customers:", err);
-    }
-  };
+ const loadCustomers = async () => {
+  try {
+    const res = await api.get("/api/customers", {
+      params: { shift, userId }
+    });
+
+    setCustomers(res.data);
+  } catch (err) {
+    console.error("Error loading customers:", err);
+  }
+};
+
 
   useEffect(() => {
     loadCustomers();
