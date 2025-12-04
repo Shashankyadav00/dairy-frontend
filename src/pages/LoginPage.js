@@ -11,9 +11,9 @@ function LoginPage() {
 
   // Auto redirect if already logged in
   useEffect(() => {
-    const user = localStorage.getItem("loggedInUser");
-    if (user) {
-      window.location.href = "/dashboard";
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      navigate("/dashboard");
     }
   }, []);
 
@@ -22,12 +22,15 @@ function LoginPage() {
     try {
       const res = await api.post("/api/auth/login", { email, password });
 
-      if (res.data === "Login successful!") {
-        localStorage.setItem("loggedInUser", email);
+      if (res.data.success === true) {
+        // Save userId so customers load only for this user
+        localStorage.setItem("userId", res.data.userId);
+        localStorage.setItem("email", email);
+
         alert("Login successful!");
         navigate("/dashboard");
       } else {
-        setMessage(res.data);
+        setMessage(res.data.message);
       }
     } catch (error) {
       console.error("Login failed:", error);
@@ -69,7 +72,6 @@ function LoginPage() {
             required
           />
 
-          {/* Forgot Password */}
           <Typography
             variant="body2"
             style={{

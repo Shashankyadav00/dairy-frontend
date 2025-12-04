@@ -22,6 +22,8 @@ import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 function Overview() {
+  const userId = localStorage.getItem("userId"); // ✅ Needed to fetch correct data
+
   const [shift, setShift] = useState(localStorage.getItem("selectedShift") || "Morning");
   const [month, setMonth] = useState(new Date().getMonth() + 1);
   const [year, setYear] = useState(new Date().getFullYear());
@@ -39,10 +41,11 @@ function Overview() {
     loadOverview();
   }, [shift, month, year]);
 
+  // ✅ Fetch user-specific overview
   const loadOverview = async () => {
     try {
       const res = await api.get("/api/overview", {
-        params: { shift, month, year },
+        params: { shift, month, year, userId }, // ⭐ IMPORTANT
       });
       setData(res.data);
     } catch (err) {
@@ -57,12 +60,16 @@ function Overview() {
       maximumFractionDigits: 2,
     });
 
+  // =============================================
+  // ✅ Quick entry = add milk for THIS USER ONLY
+  // =============================================
   const handleQuickAction = async (litresValue) => {
     if (!selectedCell) return;
     const { day, customer } = selectedCell;
 
     const entryDate = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     const isReset = litresValue === 0;
+
     const currentLitres = Number(data?.matrix?.[day]?.[customer.id]?.litres || 0);
     const newLitres = isReset ? 0 : currentLitres + Number(litresValue);
 
@@ -72,6 +79,7 @@ function Overview() {
       litres: newLitres,
       rate: customer.pricePerLitre,
       date: entryDate,
+      userId: userId, // ⭐ REQUIRED
     };
 
     try {
@@ -275,7 +283,7 @@ function Overview() {
           </Table>
         </Paper>
 
-        {/* Quick Entry Popover */}
+        {/* POPUP FOR QUICK ENTRY */}
         <Popover
           open={open}
           anchorEl={anchorEl}

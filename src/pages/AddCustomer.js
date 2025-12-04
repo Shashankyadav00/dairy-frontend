@@ -13,27 +13,27 @@ import {
   DialogActions,
 } from "@mui/material";
 import { Delete, Edit } from "@mui/icons-material";
-import api from "../api/axios";   // ✅ using centralized axios
+import api from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
 function AddCustomer() {
+  const userId = localStorage.getItem("userId"); // ✅ Required for filtering
+
   const [fullName, setFullName] = useState("");
   const [nickname, setNickname] = useState("");
   const [pricePerLitre, setPricePerLitre] = useState("");
-  const [litre, setLitre] = useState("");
   const [shift, setShift] = useState(localStorage.getItem("selectedShift") || "Morning");
   const [customers, setCustomers] = useState([]);
 
-  // Edit modal
   const [openEdit, setOpenEdit] = useState(false);
   const [editCustomer, setEditCustomer] = useState(null);
 
   const navigate = useNavigate();
 
-  // Load customers
+  // Load customers for logged-in user
   const loadCustomers = async () => {
     try {
-      const res = await api.get(`/api/customers/${shift}`);  // ✅ updated
+      const res = await api.get(`/api/customers/${shift}?userId=${userId}`); // ✅ Added userId
       setCustomers(res.data);
     } catch (err) {
       console.error("Error loading customers:", err);
@@ -47,6 +47,7 @@ function AddCustomer() {
   // Add customer
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!fullName.trim()) {
       alert("Please enter customer name.");
       return;
@@ -57,10 +58,11 @@ function AddCustomer() {
       nickname: nickname.trim() || null,
       shift,
       pricePerLitre: pricePerLitre ? parseFloat(pricePerLitre) : null,
+      userId: userId, // ✅ Attach logged-in user's ID
     };
 
     try {
-      await api.post("/api/customers", payload);  // ✅ updated
+      await api.post("/api/customers", payload); // ✅ Includes userId
       setFullName("");
       setNickname("");
       setPricePerLitre("");
@@ -74,7 +76,8 @@ function AddCustomer() {
   // Delete customer
   const deleteCustomer = async (id) => {
     if (!window.confirm("Are you sure you want to delete this customer?")) return;
-    await api.delete(`/api/customers/${id}`);  // ✅ updated
+
+    await api.delete(`/api/customers/${id}`);
     loadCustomers();
   };
 
@@ -93,10 +96,9 @@ function AddCustomer() {
         pricePerLitre: editCustomer.pricePerLitre
           ? parseFloat(editCustomer.pricePerLitre)
           : null,
-        litre: editCustomer.litre ? parseFloat(editCustomer.litre) : null,
       };
 
-      await api.put(`/api/customers/${editCustomer.id}`, updated); // ✅ updated
+      await api.put(`/api/customers/${editCustomer.id}`, updated);
       alert("Customer updated successfully!");
       setOpenEdit(false);
       loadCustomers();
@@ -120,7 +122,6 @@ function AddCustomer() {
           boxShadow: "0 4px 20px rgba(0, 0, 0, 0.1)",
         }}
       >
-        {/* Back Button */}
         <Button
           variant="outlined"
           color="secondary"
@@ -134,7 +135,6 @@ function AddCustomer() {
           🧾 Manage Customers ({shift})
         </Typography>
 
-        {/* Add Form */}
         <form onSubmit={handleSubmit}>
           <TextField
             label="Full Name"
@@ -150,7 +150,6 @@ function AddCustomer() {
             value={nickname}
             onChange={(e) => setNickname(e.target.value)}
           />
-
           <TextField
             label="Price per Litre (optional)"
             fullWidth
@@ -188,7 +187,6 @@ function AddCustomer() {
           </Button>
         </form>
 
-        {/* Customer List */}
         <Typography variant="h6" style={{ marginTop: "25px" }}>
           Existing Customers
         </Typography>
@@ -217,6 +215,7 @@ function AddCustomer() {
                   </Typography>
                 )}
               </div>
+
               <div>
                 <IconButton color="primary" onClick={() => handleEditClick(c)}>
                   <Edit />
